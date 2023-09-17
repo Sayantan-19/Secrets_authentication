@@ -1,3 +1,5 @@
+
+require('dotenv').config()
 const express = require ('express')
 const mongoose = require('mongoose');
 const ejs = require ('ejs');
@@ -15,14 +17,7 @@ const userSchema = new mongoose.Schema({
     password : String
 })
 
-// const encKey = crypto.randomBytes(32).toString('base64');
-
-// // Generate a random 32-byte signing key
-// const sigKey = crypto.randomBytes(32).toString('base64');
-
-secret = "set it to any string you want"
-
-userSchema.plugin(encrypt, { secret: secret ,encryptedFields: ["password"] });
+userSchema.plugin(encrypt, { secret: process.env.SECRET ,encryptedFields: ["password"] });
 
 const User  = new mongoose.model("User", userSchema)
 
@@ -68,6 +63,7 @@ app.post("/login", function(req, res){
         console.log(err)
     })
 })
+
 
 
 
