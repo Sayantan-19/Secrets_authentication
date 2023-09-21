@@ -8,8 +8,8 @@ const session = require('express-session');
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const FacebookStrategy = require("passport-facebook")
-const findOrCreate = require('mongoose-findorcreate')
+const FacebookStrategy = require("passport-facebook");
+const findOrCreate = require('mongoose-findorcreate');
 
 
 
@@ -36,7 +36,8 @@ mongoose.connect('mongodb://127.0.0.1:27017/userDB');
 const userSchema = new mongoose.Schema({
     email: String,
     password: String,
-    googleId: String
+    googleId: String,
+    secrets : String
 })
 
 userSchema.plugin(passportLocalMongoose);
@@ -73,7 +74,7 @@ passport.use(new GoogleStrategy({
     state: true
 },
     function (accessToken, refreshToken, profile, cb) {
-        console.log(profile)
+        // console.log(profile) /// return profile information to console log
         User.findOrCreate({ googleId: profile.id }, function (err, user) {
             return cb(err, user);
         });
@@ -125,18 +126,26 @@ app.get("/auth/google/secrets",
 
 app.get("/login", function (req, res) {
     res.render("login");
-})
+});
 
 app.get("/register", function (req, res) {
     res.render("register");
-})
+});
 
-app.get("/secrets", function (req, res) {
+app.get("/submit" , function(req, res){
     if (req.isAuthenticated()) {
-        res.render("secrets")
+        res.render("submit")
     } else {
         res.redirect("/login")
     }
+});
+
+app.get("/secrets", function (req, res) {
+User.find({"secrets":{$ne: null}}).then(function(founduser){
+    res.render("secrets",{userwithsecrets : founduser})
+}).catch(function(err){
+    console.log(err)
+})
 });
 
 app.get("/logout", function (req, res) {
@@ -182,6 +191,22 @@ app.post("/login", function (req, res) {
         }
     })
 
+});
+
+app.post("/submit", function(req, res){
+    const submittedsecrets = req.body.secret;
+    // console.log(req.user)
+
+    User.findById(req.user.id).then(function(founduser){
+        founduser.secrets = submittedsecrets
+        founduser.save().then(function(){
+            res.redirect("/secrets");
+        }).catch(function(err){
+            console.log(err)
+        })
+    }).catch(function(err){
+        console.log(err)
+    })
 });
 
 
